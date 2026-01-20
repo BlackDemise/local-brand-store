@@ -1,0 +1,220 @@
+@baseUrl = http://localhost:8080/api/v1
+@cartToken = b0bbc10d-590b-4619-84e9-e2343d1a5fa4
+
+# Cart Item IDs (Just look at the database please)
+@cartItemId1 = 1
+@cartItemId2 = 2
+@cartItemId3 = 3
+@cartItemId4 = 4
+@cartItemId5 = 5
+@cartItemId6 = 6
+
+### SETUP: Build a test cart first
+### Run these requests from cart-api.http to populate cart:
+### - Add Áo Thun Basic (qty: 2)
+### - Add Áo Polo (qty: 1) 
+### - Add Quần Jean (qty: 1)
+### - Add Giày Sneaker (qty: 2)
+### - Add Mũ Lưỡi Trai (qty: 3)
+### - Add Balo Laptop (qty: 1)
+
+### Scenario 1: Checkout ALL items in cart
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 2
+    },
+    {
+      "cartItemId": {{cartItemId2}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId3}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId4}},
+      "quantity": 2
+    },
+    {
+      "cartItemId": {{cartItemId5}},
+      "quantity": 3
+    },
+    {
+      "cartItemId": {{cartItemId6}},
+      "quantity": 1
+    }
+  ]
+}
+
+### Scenario 2: Partial Checkout - Only buy 3 items
+# Customer wants to buy Áo, Quần, and Giày only
+# Mũ and Balo remain in cart for later
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId3}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId4}},
+      "quantity": 1
+    }
+  ]
+}
+
+### Scenario 3: Buy LESS than cart quantity
+# Cart has 2 Áo Thun, but customer only wants to buy 1
+# The other 1 remains in cart
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 1
+    }
+  ]
+}
+
+### Scenario 4: Single expensive item checkout
+# Customer carefully selects just one item to buy
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId4}},
+      "quantity": 2
+    }
+  ]
+}
+
+### Scenario 5: Multiple items, varied quantities
+# Real shopping scenario - different items, different quantities
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId2}},
+      "quantity": 1
+    },
+    {
+      "cartItemId": {{cartItemId5}},
+      "quantity": 2
+    }
+  ]
+}
+
+### Scenario 6: Test Stock Reservation Expiration
+# 1. Start checkout (reserves stock for 15 minutes)
+# 2. Wait 15+ minutes 
+# 3. Try to start checkout again
+# Expected: Old reservations expired, new ones created
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 2
+    }
+  ]
+}
+
+### Scenario 7: Test Insufficient Stock (Edge Case)
+# Try to checkout more than available in cart
+# Expected: Error - quantity exceeds cart quantity
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 100
+    }
+  ]
+}
+
+### Scenario 8: Test Invalid Cart Item ID
+# Try to checkout item not in cart
+# Expected: Error - cart item not found
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": 999999,
+      "quantity": 1
+    }
+  ]
+}
+
+### Scenario 9: Budget-Conscious Shopping
+# Customer can only afford items under certain amount
+# Checkout only the cheaper items
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 2
+    },
+    {
+      "cartItemId": {{cartItemId5}},
+      "quantity": 3
+    }
+  ]
+}
+
+### Scenario 10: Test Race Condition Prevention
+# MANUAL TEST - Run this simultaneously from 2+ clients
+# With only 1 item in stock, only ONE should succeed
+# Setup: Ensure SKU has stock_qty = 1
+POST {{baseUrl}}/checkout/start
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "items": [
+    {
+      "cartItemId": {{cartItemId1}},
+      "quantity": 1
+    }
+  ]
+}
+
+###

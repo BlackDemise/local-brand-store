@@ -1,0 +1,66 @@
+@startuml Admin Order Status Update
+
+title Admin Order Status Update
+
+actor Admin
+participant "Frontend" as FE
+participant "OrderResource" as Order
+participant "OrderService" as OrdSvc
+participant "EmailService" as Email
+participant "Database" as DB
+actor Customer
+
+== View Order Details ==
+
+Admin -> FE: Select order from list\nClick order ID
+FE -> Order: GET /api/v1/order/{orderId}\nAuthorization: Bearer {token}
+activate Order
+Order -> OrdSvc: getOrderById(orderId)
+activate OrdSvc
+OrdSvc -> DB: SELECT order, order_items\nWHERE id = ?
+DB --> OrdSvc: Order details
+OrdSvc --> Order: OrderResponse\n{orderId, status, items, customerInfo}
+deactivate OrdSvc
+Order --> FE: Order details
+deactivate Order
+FE --> Admin: Display order details\nCurrent status: CONFIRMED
+
+== Update Order Status ==
+
+Admin -> FE: Select new status: "SHIPPING"\nAdd note: "Shipped via Giao Hang Nhanh"\nClick "Update Status"
+
+FE -> Order: PUT /api/v1/order/{orderId}/status\nAuthorization: Bearer {token}\n{newStatus: "SHIPPING",\nnote: "Shipped via Giao Hang Nhanh"}
+activate Order
+Order -> OrdSvc: updateOrderStatus(orderId, request, adminEmail)
+activate OrdSvc
+
+OrdSvc -> DB: SELECT order WHERE id = ?
+DB --> OrdSvc: Order (currentStatus=CONFIRMED)
+
+OrdSvc -> OrdSvc: validateStatusTransition()\nCONFIRMED → SHIPPING
+
+alt Valid transition
+    OrdSvc -> DB: UPDATE orders\nSET status = 'SHIPPING'\nWHERE id = ?
+
+    OrdSvc -> DB: INSERT INTO order_history\nVALUES (order_id, 'CONFIRMED', 'SHIPPING',\n'Shipped via Giao Hang Nhanh', now())
+
+    OrdSvc -> Email: sendOrderStatusUpdate(order,\noldStatus=CONFIRMED,\nnewStatus=SHIPPING)
+    activate Email
+    Email --> Customer: Email notification\n"Your order is now being shipped"
+    deactivate Email
+    
+    OrdSvc --> Order: OrderResponse\n{orderId, status=SHIPPING, ...}
+    
+else Invalid transition (e.g., DELIVERED → SHIPPING)
+    OrdSvc --> Order: InvalidOrderStatusException
+    Order --> FE: 400 Bad Request\n{message: "Invalid status transition"}
+    FE --> Admin: Show error\n"Cannot change status: Invalid transition"
+end
+
+deactivate OrdSvc
+Order --> FE: Status updated successfully
+deactivate Order
+FE --> Admin: Show success message\n"Order status updated to SHIPPING"
+
+@enduml
+

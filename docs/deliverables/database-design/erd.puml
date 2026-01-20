@@ -1,0 +1,240 @@
+@startuml Local_Brand_Store_ERD
+
+' Styling
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam entity {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 11
+}
+
+' ========== USER & AUTHENTICATION ==========
+
+entity "User" as user {
+    * id : BIGINT <<PK>>
+    --
+    * full_name : VARCHAR(100)
+    * email : VARCHAR(100) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * role : ENUM(CUSTOMER, ADMIN)
+    * is_active : BOOLEAN
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "PendingRegistration" as pending_reg {
+    * id : BIGINT <<PK>>
+    --
+    * email : VARCHAR(100) <<UNIQUE>>
+    * full_name : VARCHAR(100)
+    * password : VARCHAR(255)
+    * otp_code : VARCHAR(6)
+    * otp_expiry : TIMESTAMP
+    * attempts : INTEGER
+    --
+    created_at : TIMESTAMP
+}
+
+entity "BlacklistedToken" as blacklisted {
+    * id : BIGINT <<PK>>
+    --
+    * token : VARCHAR(512) <<UNIQUE>>
+    * token_type : ENUM(ACCESS, REFRESH)
+    * expiry_date : TIMESTAMP
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+' ========== PRODUCT CATALOG ==========
+
+entity "Category" as category {
+    * id : BIGINT <<PK>>
+    --
+    * name : VARCHAR(100)
+    * slug : VARCHAR(100) <<UNIQUE>>
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "Product" as product {
+    * id : BIGINT <<PK>>
+    --
+    * category_id : BIGINT <<FK>>
+    * name : VARCHAR(255)
+    * slug : VARCHAR(255) <<UNIQUE>>
+    * description : TEXT
+    * base_price : DECIMAL(10,2)
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "Sku" as sku {
+    * id : BIGINT <<PK>>
+    --
+    * product_id : BIGINT <<FK>>
+    * size : VARCHAR(10)
+    * color : VARCHAR(50)
+    * price : DECIMAL(10,2)
+    * stock_qty : INTEGER
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "SkuCode" as sku_code {
+    * id : BIGINT <<PK>>
+    --
+    * sku_id : BIGINT <<FK>>
+    * code : VARCHAR(255) <<UNIQUE>>
+    * is_primary : BOOLEAN
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "ProductImage" as product_image {
+    * id : BIGINT <<PK>>
+    --
+    * product_id : BIGINT <<FK>>
+    * image_url : VARCHAR(500)
+    * position : INTEGER
+    * is_primary : BOOLEAN
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+' ========== SHOPPING CART ==========
+
+entity "Cart" as cart {
+    * id : BIGINT <<PK>>
+    --
+    * token : VARCHAR(36) <<UNIQUE>>
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "CartItem" as cart_item {
+    * id : BIGINT <<PK>>
+    --
+    * cart_id : BIGINT <<FK>>
+    * sku_id : BIGINT <<FK>>
+    * quantity : INTEGER
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+    ..
+    <<UNIQUE(cart_id, sku_id)>>
+}
+
+entity "Reservation" as reservation {
+    * id : BIGINT <<PK>>
+    --
+    * sku_id : BIGINT <<FK>>
+    * cart_id : BIGINT <<FK>>
+    * quantity : INTEGER
+    * status : ENUM(ACTIVE, CONFIRMED, EXPIRED, CANCELLED)
+    * expires_at : TIMESTAMP
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+' ========== ORDER MANAGEMENT ==========
+
+entity "Order" as order {
+    * id : BIGINT <<PK>>
+    --
+    * tracking_token : VARCHAR(36) <<UNIQUE>>
+    * status : ENUM
+    * payment_method : ENUM(COD, BANK_TRANSFER)
+    * total_amount : DECIMAL(10,2)
+    * customer_name : VARCHAR(100)
+    * customer_phone : VARCHAR(20)
+    * customer_email : VARCHAR(100)
+    * shipping_addr : TEXT
+    * note : TEXT
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "OrderItem" as order_item {
+    * id : BIGINT <<PK>>
+    --
+    * order_id : BIGINT <<FK>>
+    * sku_id : BIGINT <<FK>>
+    * quantity : INTEGER
+    * unit_price : DECIMAL(10,2)
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+entity "OrderHistory" as order_history {
+    * id : BIGINT <<PK>>
+    --
+    * order_id : BIGINT <<FK>>
+    * old_status : VARCHAR(50)
+    * new_status : VARCHAR(50)
+    * note : TEXT
+    --
+    created_at : TIMESTAMP
+    created_by : BIGINT
+    updated_at : TIMESTAMP
+    updated_by : BIGINT
+}
+
+' ========== RELATIONSHIPS ==========
+
+' Product Catalog Relationships
+category ||--o{ product : "has many"
+product ||--o{ sku : "has many variants"
+sku ||--o{ sku_code : "has multiple codes"
+product ||--o{ product_image : "has many"
+
+' Cart Relationships
+cart ||--o{ cart_item : "contains"
+sku ||--o{ cart_item : "referenced by"
+
+' Reservation Relationships (Critical for overselling prevention)
+cart ||--o{ reservation : "has"
+sku ||--o{ reservation : "reserved in"
+
+' Order Relationships
+order ||--o{ order_item : "contains"
+sku ||--o{ order_item : "ordered as"
+order ||--o{ order_history : "tracks changes"
+
+@enduml

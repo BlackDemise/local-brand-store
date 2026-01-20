@@ -1,0 +1,188 @@
+@baseUrl = http://localhost:8080/api/v1
+
+### ============================================
+### BASIC PRODUCT QUERIES
+### ============================================
+
+### 1. Get All Products (Default Pagination)
+GET {{baseUrl}}/product
+Accept: application/json
+
+### 2. Get Products with Custom Pagination
+GET {{baseUrl}}/product?page=0&size=10
+Accept: application/json
+
+### 3. Get Second Page of Products
+GET {{baseUrl}}/product?page=1&size=5
+Accept: application/json
+
+### ============================================
+### FILTERING BY CATEGORY
+### ============================================
+
+### 4. Get Products in Category 1 (Áo Thun)
+GET {{baseUrl}}/product?categoryId=1
+Accept: application/json
+
+### 5. Get Products in Category 2 (Quần Jean)
+GET {{baseUrl}}/product?categoryId=2
+Accept: application/json
+
+### 6. Get Products in Category 3 (Giày Dép)
+GET {{baseUrl}}/product?categoryId=3
+Accept: application/json
+
+### 7. Get Products in Category 4 (Phụ Kiện)
+GET {{baseUrl}}/product?categoryId=4
+Accept: application/json
+
+### ============================================
+### FILTERING BY PRICE
+### ============================================
+
+### 8. Get Products Under 200k
+GET {{baseUrl}}/product?maxPrice=200000
+Accept: application/json
+
+### 9. Get Products Between 100k and 500k
+GET {{baseUrl}}/product?minPrice=100000&maxPrice=500000
+Accept: application/json
+
+### 10. Get Products Over 500k
+GET {{baseUrl}}/product?minPrice=500000
+Accept: application/json
+
+### 11. Get Affordable Products (50k - 200k)
+GET {{baseUrl}}/product?minPrice=50000&maxPrice=200000
+Accept: application/json
+
+### ============================================
+### SORTING
+### ============================================
+
+### 12. Sort by Price - Low to High
+GET {{baseUrl}}/product?sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 13. Sort by Price - High to Low
+GET {{baseUrl}}/product?sortBy=basePrice&sortDirection=DESC
+Accept: application/json
+
+### 14. Sort by Name - A to Z
+GET {{baseUrl}}/product?sortBy=name&sortDirection=ASC
+Accept: application/json
+
+### 15. Sort by Name - Z to A
+GET {{baseUrl}}/product?sortBy=name&sortDirection=DESC
+Accept: application/json
+
+### 16. Sort by Newest First (Default)
+GET {{baseUrl}}/product?sortBy=createdAt&sortDirection=DESC
+Accept: application/json
+
+### 17. Sort by Oldest First
+GET {{baseUrl}}/product?sortBy=createdAt&sortDirection=ASC
+Accept: application/json
+
+### ============================================
+### COMBINED FILTERS
+### ============================================
+
+### 18. Category + Price Filter
+GET {{baseUrl}}/product?categoryId=1&minPrice=100000&maxPrice=300000
+Accept: application/json
+
+### 19. Category + Price + Sort
+GET {{baseUrl}}/product?categoryId=2&minPrice=100000&maxPrice=300000&sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 20. Full Filter with Pagination
+GET {{baseUrl}}/product?categoryId=1&minPrice=50000&maxPrice=500000&page=0&size=10&sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 21. Expensive Items in Category 3
+GET {{baseUrl}}/product?categoryId=3&minPrice=500000&sortBy=basePrice&sortDirection=DESC
+Accept: application/json
+
+### ============================================
+### PRODUCT DETAILS
+### ============================================
+
+### 22. Get Product by ID - Áo Thun Basic Trắng
+GET {{baseUrl}}/product/1
+Accept: application/json
+
+### 23. Get Product by ID - Quần Jean Skinny Xanh
+GET {{baseUrl}}/product/6
+Accept: application/json
+
+### 24. Get Product by Slug - Áo Thun Basic Trắng
+GET {{baseUrl}}/product/slug/ao-thun-basic-trang
+Accept: application/json
+
+### 25. Get Product by Slug - Giày Sneaker Trắng
+GET {{baseUrl}}/product/slug/giay-sneaker-trang
+Accept: application/json
+
+### ============================================
+### EDGE CASES & LARGE QUERIES
+### ============================================
+
+### 26. Large Page Size
+GET {{baseUrl}}/product?page=0&size=100
+Accept: application/json
+
+### 27. Price Range with No Results
+GET {{baseUrl}}/product?minPrice=9999999&maxPrice=99999999
+Accept: application/json
+
+### 28. High Page Number
+GET {{baseUrl}}/product?page=100&size=10
+Accept: application/json
+
+### ============================================
+### REAL-WORLD SCENARIOS
+### ============================================
+
+### 29. Shop Áo T-Shirt Under 300k
+GET {{baseUrl}}/product?categoryId=1&maxPrice=300000&sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 30. Browse All Shoes, Cheapest First
+GET {{baseUrl}}/product?categoryId=3&sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 31. Find Mid-Range Pants
+GET {{baseUrl}}/product?categoryId=2&minPrice=200000&maxPrice=600000&sortBy=basePrice&sortDirection=ASC
+Accept: application/json
+
+### 32. Browse Premium Products
+GET {{baseUrl}}/product?minPrice=1000000&sortBy=basePrice&sortDirection=DESC
+Accept: application/json
+
+### 33. New Arrivals - All Categories
+GET {{baseUrl}}/product?sortBy=createdAt&sortDirection=DESC&size=20
+Accept: application/json
+
+### ============================================
+### ERROR SCENARIOS
+### ============================================
+
+### 34. Product Not Found - Invalid ID
+GET {{baseUrl}}/product/99999
+Accept: application/json
+
+### 35. Product Not Found - Invalid Slug
+GET {{baseUrl}}/product/slug/non-existent-product
+Accept: application/json
+
+### 36. Invalid Category ID
+GET {{baseUrl}}/product?categoryId=999
+Accept: application/json
+
+### 37. Invalid Sort Field
+# > This might be accepted but won't sort properly
+GET {{baseUrl}}/product?sortBy=invalidField&sortDirection=ASC
+Accept: application/json
+
+###

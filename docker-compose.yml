@@ -1,0 +1,68 @@
+services:
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    container_name: lbs-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/lbs
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - SPRING_DATA_REDIS_HOST=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lbs-network
+
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: lbs-postgres
+    environment:
+      - POSTGRES_DB=lbs
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lbs"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lbs-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: lbs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lbs-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  lbs-network:
+    driver: bridge

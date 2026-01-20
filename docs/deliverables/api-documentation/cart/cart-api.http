@@ -1,0 +1,128 @@
+@baseUrl = http://localhost:8080/api/v1
+@cartToken = b0bbc10d-590b-4619-84e9-e2343d1a5fa4
+
+# SKU IDs for testing
+@skuAoThunBasicTrangM = 1
+@skuAoPoloXanhL = 6
+@skuQuanJeanSkinnyXanh30 = 22
+@skuGiaySneakerTrang40 = 46
+@skuMuLuoiTraiDen = 64
+@skuBaloLaptopXam = 90
+@skuViDaNauFree = 78
+@skuDongHoBacFree = 82
+
+### 1. Add First Item to Cart (Creates new cart, returns cartToken)
+# > Save the cartToken from response and update cartToken variable above
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "",
+  "skuId": {{skuAoThunBasicTrangM}},
+  "quantity": 2
+}
+
+### 2. Add Second Item - Áo Polo (Use cartToken from step 1)
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuAoPoloXanhL}},
+  "quantity": 1
+}
+
+### 3. Add Third Item - Quần Jean
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuQuanJeanSkinnyXanh30}},
+  "quantity": 1
+}
+
+### 4. Add Fourth Item - Giày Sneaker
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuGiaySneakerTrang40}},
+  "quantity": 2
+}
+
+### 5. Add Fifth Item - Mũ Lưỡi Trai
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuMuLuoiTraiDen}},
+  "quantity": 3
+}
+
+### 6. Add Sixth Item - Balo Laptop
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuBaloLaptopXam}},
+  "quantity": 1
+}
+
+### 7. Get Cart (View all items with stock validation)
+GET {{baseUrl}}/cart?cartToken={{cartToken}}
+
+### 8. Update Cart Item Quantity (Increase quantity)
+# > Update cartItemId based on your cart
+PUT {{baseUrl}}/cart/items/1?cartToken={{cartToken}}
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+
+### 9. Update Cart Item Quantity (Decrease quantity)
+PUT {{baseUrl}}/cart/items/5?cartToken={{cartToken}}
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+
+### 10. Test Stock Validation - Try to add more than available
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuDongHoBacFree}},
+  "quantity": 100
+}
+
+### 11. Add Same Item Again (Should sum quantities)
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "cartToken": "{{cartToken}}",
+  "skuId": {{skuAoThunBasicTrangM}},
+  "quantity": 1
+}
+
+### 12. Remove Cart Item
+# > Update cartItemId based on your cart
+DELETE {{baseUrl}}/cart/items/3?cartToken={{cartToken}}
+
+### 13. Get Cart Again (Verify item removed)
+GET {{baseUrl}}/cart?cartToken={{cartToken}}
+
+### 14. Clear Cart
+DELETE {{baseUrl}}/cart?cartToken={{cartToken}}
+
+### 15. Verify Cart is Empty
+GET {{baseUrl}}/cart?cartToken={{cartToken}}
+
+###

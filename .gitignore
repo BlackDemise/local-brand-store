@@ -1,0 +1,56 @@
+# Global
+.idea
+.vscode
+# It's here :v
+.env
+docs/initial
+
+# Frontend
+frontend/.env
+frontend/logs
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+frontend/node_modules
+frontend/dist
+frontend/dist-ssr
+frontend/*.local
+frontend/.vscode/*
+frontend/!.vscode/extensions.json
+frontend/.idea
+frontend/.DS_Store
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+# Backend
+# Thanks to spring-dotenv, we have to put the .env file in Global section :v
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/!**/src/main/**/target/
+backend/!**/src/test/**/target/
+backend/.apt_generated
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/.springBeans
+backend/.sts4-cache
+backend/.idea
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+backend/nbproject/private/
+backend/nbbuild/
+backend/dist/
+backend/nbdist/
+backend/.nb-gradle/
+backend/build/
+backend/!**/src/main/**/build/
+backend/!**/src/test/**/build/
+backend/.vscode/

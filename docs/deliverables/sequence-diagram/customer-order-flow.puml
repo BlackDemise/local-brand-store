@@ -1,0 +1,135 @@
+@startuml Customer Order Flow
+
+title Customer Order Flow
+
+actor Customer
+participant "Frontend" as FE
+participant "CartResource" as Cart
+participant "CheckoutResource" as Checkout
+participant "OrderResource" as Order
+participant "ReservationService" as ResSvc
+participant "OrderService" as OrdSvc
+participant "EmailService" as Email
+participant "Database" as DB
+participant "WebhookResource" as Webhook
+participant "PaymentService" as PaySvc
+participant "SePay" as SePay
+
+== Phase 1: Add to Cart ==
+
+Customer -> FE: Browse products
+FE -> Cart: POST /api/v1/cart/items\n{cartToken, skuId, quantity}
+activate Cart
+Cart -> DB: Validate SKU and stock
+DB --> Cart: SKU info + available stock
+Cart -> DB: Save cart item
+Cart --> FE: CartResponse\n{cartToken, items, subtotal}
+deactivate Cart
+FE --> Customer: Show cart
+
+== Phase 2: Start Checkout ==
+
+Customer -> FE: Click "Checkout"
+FE -> Checkout: POST /api/v1/checkout/start\n{cartToken, items[]}
+activate Checkout
+Checkout -> ResSvc: startCheckout(request)
+activate ResSvc
+
+loop For each cart item
+    ResSvc -> DB: **Atomic UPDATE**\nUPDATE skus SET stock_qty = stock_qty - ?\nWHERE id = ? AND stock_qty >= ?
+    alt Stock sufficient
+        DB --> ResSvc: 1 row affected (SUCCESS)
+        ResSvc -> DB: INSERT reservation\n(status=ACTIVE, expires_at=now+15min)
+    else Stock insufficient
+        DB --> ResSvc: 0 rows affected (FAIL)
+        ResSvc --> Checkout: InsufficientStockException
+        Checkout --> FE: 400 Bad Request
+        FE --> Customer: "Out of stock"
+    end
+end
+
+ResSvc --> Checkout: CheckoutSessionResponse\n{reservations, expiresAt, totalAmount}
+deactivate ResSvc
+Checkout --> FE: Reservation created
+deactivate Checkout
+FE --> Customer: Show checkout form\n(shipping info + payment method)
+
+== Phase 3: Place Order ==
+
+Customer -> FE: Fill shipping info\nSelect payment method\nClick "Place Order"
+FE -> Order: POST /api/v1/order\n{cartId, customerInfo, paymentMethod}
+activate Order
+Order -> OrdSvc: placeOrder(request)
+activate OrdSvc
+
+OrdSvc -> DB: Get active reservations
+DB --> OrdSvc: List<Reservation>
+
+alt Reservations expired
+    OrdSvc --> Order: ReservationExpiredException
+    Order --> FE: 400 Bad Request
+    FE --> Customer: "Session expired, please checkout again"
+else Reservations valid
+    OrdSvc -> DB: Create order\n(trackingToken, status, totalAmount)
+    OrdSvc -> DB: Create order items from reservations
+    OrdSvc -> DB: Mark reservations as CONSUMED
+    OrdSvc -> DB: Clear cart items
+    OrdSvc -> DB: Create order history entry
+    
+    alt Payment method = COD
+        OrdSvc -> Email: sendOrderConfirmation(order)
+        activate Email
+        Email --> Customer: Order confirmation email\n(Tracking link)
+        deactivate Email
+        OrdSvc --> Order: OrderResponse\n{orderId, trackingToken, status=CONFIRMED}
+    else Payment method = BANK_TRANSFER
+        OrdSvc -> OrdSvc: Generate VietQR code\nTransferMessage: "ORDER-{orderId}"
+        OrdSvc -> Email: sendOrderConfirmation(order)\nwith QR code
+        activate Email
+        Email --> Customer: Order confirmation email\n(QR code + bank info + tracking link)
+        deactivate Email
+        OrdSvc --> Order: OrderResponse\n{orderId, trackingToken,\nstatus=PENDING_PAYMENT,\nbankTransferInfo{qrCode, accountNo, ...}}
+    end
+end
+
+deactivate OrdSvc
+Order --> FE: Order created
+deactivate Order
+FE --> Customer: Show order confirmation\n(Order ID + tracking link)
+
+alt Payment method = BANK_TRANSFER
+    == Phase 4: Payment Confirmation (Bank Transfer Only) ==
+    
+    Customer -> SePay: Transfer money\nvia Banking app\nMessage: "ORDER-{orderId}"
+
+    SePay -> Webhook: POST /api/v1/webhook/sepay\n{id, transferAmount, content, transactionDate}
+    activate Webhook
+    Webhook -> PaySvc: processSepayWebhook(request, signature)
+    activate PaySvc
+    
+    PaySvc -> PaySvc: Validate signature (HMAC-SHA256)
+    PaySvc -> PaySvc: Extract order ID from content\nPattern: "ORDER-(\\d+)"
+    PaySvc -> DB: Find order by ID
+    DB --> PaySvc: Order (status=PENDING_PAYMENT)
+    
+    alt Payment valid
+        PaySvc -> PaySvc: Validate amount >= order.totalAmount
+        PaySvc -> DB: UPDATE order\nSET status = CONFIRMED
+        PaySvc -> DB: Create order history entry\n(PENDING_PAYMENT → CONFIRMED)
+        PaySvc -> Email: sendOrderStatusUpdate(order)
+        activate Email
+        Email --> Customer: Payment confirmed email
+        deactivate Email
+        PaySvc --> Webhook: Success
+    else Payment invalid
+        PaySvc --> Webhook: Log warning, no action
+    end
+    
+    deactivate PaySvc
+    Webhook --> SePay: 200 OK
+    deactivate Webhook
+
+end
+
+@enduml
+

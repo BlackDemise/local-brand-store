@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: local-brand-store
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+
+payment:
+  bank-transfer:
+    bank-code: ${BANK_CODE}
+    account-no: ${BANK_ACCOUNT_NO}
+    account-name: ${BANK_ACCOUNT_NAME}
+  sepay:
+    webhook-secret: ${SEPAY_WEBHOOK_SECRET}
+    api-key: ${SEPAY_API_KEY}

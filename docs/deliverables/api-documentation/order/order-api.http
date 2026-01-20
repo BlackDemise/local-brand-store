@@ -1,0 +1,216 @@
+@baseUrl = http://localhost:8080/api/v1
+@cartId = 1
+@orderId = 1
+@trackingToken = 88BD8189A021461CA3E0FF1339B6DD1B
+@adminAccessToken = 
+
+### ============================================
+### PUBLIC ENDPOINTS (No Authentication)
+### ============================================
+
+### 1. Place Order
+# > Prerequisites: Must have active stock reservations from checkout
+# > Save the trackingToken from response
+POST {{baseUrl}}/order
+Content-Type: application/json
+
+{
+  "cartId": {{cartId}},
+  "customerName": "Nguyễn Văn An",
+  "customerPhone": "0901234567",
+  "customerEmail": "anhsohackervl@gmail.com",
+  "shippingAddress": "123 Lê Lợi, Quận 1, TP. Hồ Chí Minh",
+  "note": "Giao hàng giờ hành chính",
+  "paymentMethod": "BANK_TRANSFER"
+}
+
+### 2. Place Order with Bank Transfer
+POST {{baseUrl}}/order
+Content-Type: application/json
+
+{
+  "cartId": {{cartId}},
+  "customerName": "Trần Thị Bình",
+  "customerPhone": "0987654321",
+  "customerEmail": "tranthibinh@gmail.com",
+  "shippingAddress": "456 Nguyễn Huệ, Quận 3, TP. Hồ Chí Minh",
+  "note": "Gọi trước khi giao 30 phút",
+  "paymentMethod": "BANK_TRANSFER"
+}
+
+### 3. Track Order by Tracking Token
+# > Use the trackingToken received when placing order
+GET {{baseUrl}}/order/track/{{trackingToken}}
+
+### ============================================
+### ADMIN ENDPOINTS (Require Authentication)
+### ============================================
+### First, login as admin to get access token
+### Use authentication-api.http to login as admin
+
+### 4. Get Order by ID (Admin)
+GET {{baseUrl}}/order/{{orderId}}
+Authorization: Bearer {{adminAccessToken}}
+
+### 5. Get All Orders (Admin) - Default pagination
+GET {{baseUrl}}/order
+Authorization: Bearer {{adminAccessToken}}
+
+### 6. Get Orders with Status Filter (Admin)
+GET {{baseUrl}}/order?status=PENDING_PAYMENT
+Authorization: Bearer {{adminAccessToken}}
+
+### 7. Get Orders with Status - CONFIRMED
+GET {{baseUrl}}/order?status=CONFIRMED
+Authorization: Bearer {{adminAccessToken}}
+
+### 8. Get Orders with Status - SHIPPING
+GET {{baseUrl}}/order?status=SHIPPING
+Authorization: Bearer {{adminAccessToken}}
+
+### 9. Get Orders with Status - DELIVERED
+GET {{baseUrl}}/order?status=DELIVERED
+Authorization: Bearer {{adminAccessToken}}
+
+### 10. Get Orders with Status - CANCELLED
+GET {{baseUrl}}/order?status=CANCELLED
+Authorization: Bearer {{adminAccessToken}}
+
+### 11. Get Orders with Date Range Filter (Admin)
+# > ISO 8601 format for dates
+GET {{baseUrl}}/order?startDate=2026-01-01T00:00:00Z&endDate=2026-01-31T23:59:59Z
+Authorization: Bearer {{adminAccessToken}}
+
+### 12. Get Orders with Pagination (Admin)
+GET {{baseUrl}}/order?page=0&size=10
+Authorization: Bearer {{adminAccessToken}}
+
+### 13. Get Orders with Multiple Filters (Admin)
+GET {{baseUrl}}/order?status=PENDING_PAYMENT&startDate=2026-01-01T00:00:00Z&page=0&size=20
+Authorization: Bearer {{adminAccessToken}}
+
+### 14. Update Order Status to CONFIRMED (Admin)
+PUT {{baseUrl}}/order/{{orderId}}/status
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "newStatus": "CONFIRMED",
+  "note": "Đã xác nhận thanh toán"
+}
+
+### 15. Update Order Status to SHIPPING (Admin)
+PUT {{baseUrl}}/order/{{orderId}}/status
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "newStatus": "SHIPPING",
+  "note": "Đơn hàng đã được giao cho đơn vị vận chuyển"
+}
+
+### 16. Update Order Status to DELIVERED (Admin)
+PUT {{baseUrl}}/order/{{orderId}}/status
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "newStatus": "DELIVERED",
+  "note": "Đơn hàng đã được giao thành công"
+}
+
+### 17. Cancel Order (Admin)
+POST {{baseUrl}}/order/{{orderId}}/cancel
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Khách hàng yêu cầu hủy đơn"
+}
+
+### 18. Cancel Order - Out of Stock (Admin)
+POST {{baseUrl}}/order/{{orderId}}/cancel
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Hết hàng, không thể giao"
+}
+
+### 19. Get Order History (Admin)
+# > Shows all status changes for an order
+GET {{baseUrl}}/order/{{orderId}}/history
+Authorization: Bearer {{adminAccessToken}}
+
+### ============================================
+### ERROR SCENARIOS
+### ============================================
+
+### 20. Place Order Without Reservations (Should Fail)
+# > Try to place order without calling checkout first
+POST {{baseUrl}}/order
+Content-Type: application/json
+
+{
+  "cartId": 999,
+  "customerName": "Test User",
+  "customerPhone": "0901234567",
+  "customerEmail": "test@example.com",
+  "shippingAddress": "123 Test Street",
+  "paymentMethod": "COD"
+}
+
+### 21. Place Order with Invalid Email (Should Fail)
+POST {{baseUrl}}/order
+Content-Type: application/json
+
+{
+  "cartId": {{cartId}},
+  "customerName": "Test User",
+  "customerPhone": "0901234567",
+  "customerEmail": "invalid-email",
+  "shippingAddress": "123 Test Street",
+  "paymentMethod": "COD"
+}
+
+### 22. Place Order with Missing Fields (Should Fail)
+POST {{baseUrl}}/order
+Content-Type: application/json
+
+{
+  "cartId": {{cartId}},
+  "customerName": "Test User"
+}
+
+### 23. Track Order with Invalid Token (Should Fail)
+GET {{baseUrl}}/order/track/INVALID-TOKEN-123
+
+### 24. Get Order by ID Without Auth (Should Fail - 401)
+GET {{baseUrl}}/order/{{orderId}}
+
+### 25. Update Order Status Without Auth (Should Fail - 401)
+PUT {{baseUrl}}/order/{{orderId}}/status
+Content-Type: application/json
+
+{
+  "newStatus": "CONFIRMED"
+}
+
+### 26. Cancel Order Without Auth (Should Fail - 401)
+POST {{baseUrl}}/order/{{orderId}}/cancel
+Content-Type: application/json
+
+{
+  "reason": "Test"
+}
+
+### 27. Update Order Status with Invalid Status (Should Fail)
+PUT {{baseUrl}}/order/{{orderId}}/status
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "newStatus": "INVALID_STATUS"
+}
+
+###

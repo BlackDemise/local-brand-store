@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment QR Code - Order #[[${orderId}]]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .qr-container {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .qr-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .order-info {
+            text-align: left;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #111827;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .amount-highlight {
+            font-size: 32px;
+            color: #7c3aed;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .instructions {
+            text-align: left;
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            margin: 20px 0;
+        }
+
+        .instructions h3 {
+            color: #1e40af;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            color: #1e3a8a;
+            font-size: 14px;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 20px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 8px;
+        }
+
+        .buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6d28d9;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>💳 Thanh toán đơn hàng</h1>
+        <p style="color: #6b7280; margin-top: 8px;">Order #<span th:text="${orderId}"></span></p>
+        <div class="status-badge" th:text="${status}">PENDING_PAYMENT</div>
+    </div>
+
+    <div class="amount-highlight">
+        <span th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')}"></span> VNĐ
+    </div>
+
+    <div class="qr-container">
+        <img th:src="'data:image/png;base64,' + ${qrImage}" alt="QR Code"/>
+        <p style="color: #6b7280; font-size: 12px; margin-top: 10px;">
+            Quét mã QR để thanh toán
+        </p>
+    </div>
+
+    <div class="order-info">
+        <div class="info-row">
+            <span class="info-label">Ngân hàng:</span>
+            <span class="info-value" th:text="${bankCode}">VIETCOMBANK</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Số tài khoản:</span>
+            <span class="info-value" th:text="${accountNo}">1234567890</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Chủ tài khoản:</span>
+            <span class="info-value" th:text="${accountName}">HUNG HYPEBEAST</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Nội dung CK:</span>
+            <span class="info-value" th:text="${transferMessage}">ORDER-123</span>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>📱 Hướng dẫn thanh toán</h3>
+        <ol>
+            <li>Mở app ngân hàng trên điện thoại</li>
+            <li>Chọn <strong>Chuyển khoản</strong> → <strong>Quét QR</strong></li>
+            <li>Quét mã QR phía trên</li>
+            <li>Kiểm tra thông tin và xác nhận thanh toán</li>
+            <li>Chờ hệ thống xác nhận (10-30 giây)</li>
+        </ol>
+    </div>
+
+    <div class="note">
+        ⚠️ <strong>Lưu ý:</strong> Vui lòng giữ nguyên nội dung chuyển khoản "<span th:text="${transferMessage}"></span>"
+        để hệ thống tự động xác nhận đơn hàng của bạn.
+    </div>
+
+    <div class="buttons">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ In mã QR</button>
+        <button class="btn btn-primary"
+                th:data-tracking-token="${trackingToken}"
+                onclick="window.location.href='/api/v1/order/track/' + this.dataset.trackingToken">
+            📦 Theo dõi đơn hàng
+        </button>
+    </div>
+
+    <div class="footer">
+        <p>Mã theo dõi: <strong th:text="${trackingToken}"></strong></p>
+        <p style="margin-top: 8px;">Hỗ trợ: support@hunghypebeast.com</p>
+    </div>
+</div>
+
+<script>
+    // Auto-refresh page every 10 seconds to check payment status
+    let refreshInterval = setInterval(function () {
+        fetch('/api/v1/order/[[${orderId}]]')
+            .then(response => response.json())
+            .then(data => {
+                if (data.result && data.result.status === 'CONFIRMED') {
+                    clearInterval(refreshInterval);
+                    alert('✅ Thanh toán thành công! Đơn hàng đã được xác nhận.');
+                    window.location.href = '/api/v1/order/track/[[${trackingToken}]]';
+                }
+            })
+            .catch(err => console.error('Error checking order status:', err));
+    }, 10000); // Check every 10 seconds
+</script>
+</body>
+</html>

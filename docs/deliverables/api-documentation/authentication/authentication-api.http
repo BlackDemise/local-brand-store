@@ -1,0 +1,108 @@
+@baseUrl = http://localhost:8080/api/v1
+@accessToken = 
+@refreshToken = 
+
+### 1. Register New User
+# > Save the email for next step
+# > Ideally, use a email that you manage to access to get the OTP.
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "bruhitispie@gmail.com",
+  "fullName": "What?",
+  "password": "Idontcare"
+}
+
+### 2. Verify OTP (Complete Registration)
+# > Check email for OTP code and enter it below
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "bruhitispie@gmail.com",
+  "otpCode": "123456"
+}
+
+### 3. Login with Existing User
+# > Use any seeded customer from V2__add_user.sql
+# > Save the accessToken from response
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nguyenvanan@gmail.com",
+  "password": "12345Ab!"
+}
+
+### 4. Introspect Token (Check if token is valid)
+POST {{baseUrl}}/auth/introspect
+Authorization: Bearer {{accessToken}}
+
+### 5. Refresh Token (Get new access token)
+# > The refresh token is sent automatically via HTTP-only cookie
+# > Save the new accessToken from response
+POST {{baseUrl}}/auth/refresh
+
+### 6. Logout
+# > Clears refresh token cookie and invalidates tokens
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+
+### 7. Login as Admin
+# > Admin credentials from V2__add_user.sql
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "auquangkhanh@gmail.com",
+  "password": "12345Ab!"
+}
+
+### 8. Register with Invalid Email
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "bruhitispie",
+  "fullName": "Just fail",
+  "password": "Careforwhat,itfails"
+}
+
+### 9. Register with Short Password
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "bruhitispie@gmail.com",
+  "fullName": "Just fail",
+  "password": "123"
+}
+
+### 10. Verify with Invalid OTP
+POST {{baseUrl}}/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "bruhitispie@gmail.com",
+  "otpCode": "000000"
+}
+
+### 11. Login with Wrong Password
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nguyenvanan@gmail.com",
+  "password": "12345Ab"
+}
+
+### 12. Introspect with Invalid Token
+POST {{baseUrl}}/auth/introspect
+Authorization: Bearer invalid.token.here
+
+### 13. Refresh with No Cookie
+# > Remove cookies before running this request
+POST {{baseUrl}}/auth/refresh
+
+###
