@@ -12,7 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import wandererpi.lbs.enums.ErrorCode;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.UserRepository;
+import wandererpi.lbs.repository.jpa.UserRepository;
 
 @Configuration
 @RequiredArgsConstructor

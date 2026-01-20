@@ -16,10 +16,10 @@ import wandererpi.lbs.entity.ProductImage;
 import wandererpi.lbs.entity.Sku;
 import wandererpi.lbs.enums.ErrorCode;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.CategoryRepository;
-import wandererpi.lbs.repository.ProductImageRepository;
-import wandererpi.lbs.repository.ProductRepository;
-import wandererpi.lbs.repository.SkuRepository;
+import wandererpi.lbs.repository.jpa.CategoryRepository;
+import wandererpi.lbs.repository.jpa.ProductImageRepository;
+import wandererpi.lbs.repository.jpa.ProductRepository;
+import wandererpi.lbs.repository.jpa.SkuRepository;
 import wandererpi.lbs.service.impl.ProductServiceImpl;
 
 import java.math.BigDecimal;

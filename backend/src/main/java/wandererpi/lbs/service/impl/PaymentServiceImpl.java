@@ -11,8 +11,8 @@ import wandererpi.lbs.entity.OrderHistory;
 import wandererpi.lbs.enums.OrderStatus;
 import wandererpi.lbs.exception.ApplicationException;
 import wandererpi.lbs.enums.ErrorCode;
-import wandererpi.lbs.repository.OrderHistoryRepository;
-import wandererpi.lbs.repository.OrderRepository;
+import wandererpi.lbs.repository.jpa.OrderHistoryRepository;
+import wandererpi.lbs.repository.jpa.OrderRepository;
 import wandererpi.lbs.service.EmailService;
 import wandererpi.lbs.service.PaymentService;
 

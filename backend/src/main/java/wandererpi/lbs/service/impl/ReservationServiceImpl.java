@@ -16,10 +16,11 @@ import wandererpi.lbs.entity.Sku;
 import wandererpi.lbs.enums.ErrorCode;
 import wandererpi.lbs.enums.ReservationStatus;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.CartItemRepository;
-import wandererpi.lbs.repository.CartRepository;
-import wandererpi.lbs.repository.ReservationRepository;
-import wandererpi.lbs.repository.SkuRepository;
+import wandererpi.lbs.repository.jdbc.StockRepository;
+import wandererpi.lbs.repository.jpa.CartItemRepository;
+import wandererpi.lbs.repository.jpa.CartRepository;
+import wandererpi.lbs.repository.jpa.ReservationRepository;
+import wandererpi.lbs.repository.jpa.SkuRepository;
 import wandererpi.lbs.service.ReservationService;
 
 import java.math.BigDecimal;
@@ -40,7 +41,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final CartItemRepository cartItemRepository;
     private final ReservationRepository reservationRepository;
     private final SkuRepository skuRepository;
-    private final JdbcTemplate jdbcTemplate;
+    private final StockRepository stockRepository;
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -190,15 +191,12 @@ public class ReservationServiceImpl implements ReservationService {
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
     protected Reservation reserveStock(Cart cart, Sku sku, Integer quantity, Instant expiresAt) {
-        // ATOMIC OPERATION: Check and decrement in single UPDATE
-        // This prevents race conditions at the database level
-        int rowsAffected = jdbcTemplate.update(
-            "UPDATE skus SET stock_qty = stock_qty - ? WHERE id = ? AND stock_qty >= ?",
-            quantity, sku.getId(), quantity
-        );
-        
+        // ATOMIC OPERATION: Delegate to StockRepository
+        // This abstraction decouples us from JDBC implementation
+        boolean reserved = stockRepository.reserveStock(sku.getId(), quantity);
+
         // If no rows affected, stock was insufficient
-        if (rowsAffected == 0) {
+        if (!reserved) {
             log.error("Insufficient stock for SKU {}. Requested: {}, Available: {}", 
                 sku.getPrimarySkuCode(), quantity, sku.getStockQty());
             
@@ -224,11 +222,10 @@ public class ReservationServiceImpl implements ReservationService {
         int count = 0;
         
         for (Reservation reservation : reservations) {
-            // Restore stock (atomic operation)
-            jdbcTemplate.update(
-                "UPDATE skus SET stock_qty = stock_qty + ? WHERE id = ?",
-                reservation.getQuantity(),
-                reservation.getSku().getId()
+            // Restore stock via repository abstraction
+            stockRepository.restoreStock(
+                    reservation.getSku().getId(),
+                    reservation.getQuantity()
             );
             
             // Mark reservation as expired

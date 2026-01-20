@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import wandererpi.lbs.entity.Order;
 import wandererpi.lbs.entity.OrderItem;
 import wandererpi.lbs.enums.OrderStatus;
-import wandererpi.lbs.repository.OrderItemRepository;
+import wandererpi.lbs.repository.jpa.OrderItemRepository;
 import wandererpi.lbs.service.EmailService;
 
 import java.math.BigDecimal;

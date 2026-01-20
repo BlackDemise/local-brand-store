@@ -19,10 +19,10 @@ import wandererpi.lbs.exception.ApplicationException;
 import wandererpi.lbs.mapper.CategoryMapper;
 import wandererpi.lbs.mapper.ProductMapper;
 import wandererpi.lbs.mapper.SkuMapper;
-import wandererpi.lbs.repository.CategoryRepository;
-import wandererpi.lbs.repository.ProductImageRepository;
-import wandererpi.lbs.repository.ProductRepository;
-import wandererpi.lbs.repository.SkuRepository;
+import wandererpi.lbs.repository.jpa.CategoryRepository;
+import wandererpi.lbs.repository.jpa.ProductImageRepository;
+import wandererpi.lbs.repository.jpa.ProductRepository;
+import wandererpi.lbs.repository.jpa.SkuRepository;
 import wandererpi.lbs.service.ProductService;
 import wandererpi.lbs.service.specification.product.ProductSpecificationBuilder;
 

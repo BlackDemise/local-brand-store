@@ -1,4 +1,4 @@
-package wandererpi.lbs.repository;
+package wandererpi.lbs.repository.jpa;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -14,9 +14,9 @@ import wandererpi.lbs.entity.Product;
 import wandererpi.lbs.entity.Sku;
 import wandererpi.lbs.enums.ErrorCode;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.CartItemRepository;
-import wandererpi.lbs.repository.CartRepository;
-import wandererpi.lbs.repository.SkuRepository;
+import wandererpi.lbs.repository.jpa.CartItemRepository;
+import wandererpi.lbs.repository.jpa.CartRepository;
+import wandererpi.lbs.repository.jpa.SkuRepository;
 import wandererpi.lbs.service.CartService;
 
 import java.math.BigDecimal;

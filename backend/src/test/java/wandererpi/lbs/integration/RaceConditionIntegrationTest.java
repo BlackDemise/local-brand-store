@@ -15,9 +15,9 @@ import wandererpi.lbs.entity.Category;
 import wandererpi.lbs.entity.Product;
 import wandererpi.lbs.entity.Sku;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.CategoryRepository;
-import wandererpi.lbs.repository.ProductRepository;
-import wandererpi.lbs.repository.SkuRepository;
+import wandererpi.lbs.repository.jpa.CategoryRepository;
+import wandererpi.lbs.repository.jpa.ProductRepository;
+import wandererpi.lbs.repository.jpa.SkuRepository;
 import wandererpi.lbs.service.CartService;
 import wandererpi.lbs.service.ReservationService;
 

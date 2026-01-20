@@ -19,7 +19,7 @@ import wandererpi.lbs.enums.OrderStatus;
 import wandererpi.lbs.enums.PaymentMethod;
 import wandererpi.lbs.enums.ReservationStatus;
 import wandererpi.lbs.exception.ApplicationException;
-import wandererpi.lbs.repository.*;
+import wandererpi.lbs.repository.jpa.*;
 import wandererpi.lbs.service.impl.OrderServiceImpl;
 
 import java.math.BigDecimal;

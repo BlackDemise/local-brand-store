@@ -16,7 +16,7 @@ import wandererpi.lbs.entity.Order;
 import wandererpi.lbs.enums.PaymentMethod;
 import wandererpi.lbs.exception.ApplicationException;
 import wandererpi.lbs.enums.ErrorCode;
-import wandererpi.lbs.repository.OrderRepository;
+import wandererpi.lbs.repository.jpa.OrderRepository;
 import wandererpi.lbs.util.VietQRUtil;
 import wandererpi.lbs.config.PaymentConfig;
 

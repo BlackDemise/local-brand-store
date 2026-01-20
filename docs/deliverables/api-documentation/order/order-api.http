@@ -21,7 +21,7 @@ Content-Type: application/json
   "customerEmail": "anhsohackervl@gmail.com",
   "shippingAddress": "123 Lê Lợi, Quận 1, TP. Hồ Chí Minh",
   "note": "Giao hàng giờ hành chính",
-  "paymentMethod": "BANK_TRANSFER"
+  "paymentMethod": "COD"
 }
 
 ### 2. Place Order with Bank Transfer

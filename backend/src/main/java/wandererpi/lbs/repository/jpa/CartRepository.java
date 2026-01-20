@@ -1,10 +1,9 @@
-package wandererpi.lbs.repository;
+package wandererpi.lbs.repository.jpa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import wandererpi.lbs.entity.Cart;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 

@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import wandererpi.lbs.entity.Cart;
-import wandererpi.lbs.repository.CartItemRepository;
-import wandererpi.lbs.repository.CartRepository;
+import wandererpi.lbs.repository.jpa.CartItemRepository;
+import wandererpi.lbs.repository.jpa.CartRepository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
