@@ -1,7 +1,5 @@
 # Project Deliverable Summary
 
-According to `docs\initial\assignment-instruct.txt` (or `docs\initial\assignment-instruct.pdf`):
-
 ## Assignment Requirements
 
 ### 1. Báo cáo kỹ thuật (Technical Report)
