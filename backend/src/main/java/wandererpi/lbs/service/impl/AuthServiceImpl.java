@@ -25,7 +25,9 @@ import wandererpi.lbs.repository.jpa.PendingRegistrationRepository;
 import wandererpi.lbs.repository.jpa.UserRepository;
 import wandererpi.lbs.service.AuthenticationService;
 import wandererpi.lbs.service.EmailService;
+import wandererpi.lbs.util.CookieManager;
 import wandererpi.lbs.util.JwtUtil;
+import wandererpi.lbs.util.OtpGenerator;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -42,8 +44,10 @@ public class AuthServiceImpl implements AuthenticationService {
     private final BlacklistedTokenRepository blacklistedTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    
-    private static final long OTP_VALIDITY_MINUTES = 10;
+    private final OtpGenerator otpGenerator;
+    private final CookieManager cookieManager;
+
+    private static final long OTP_VALIDITY_SECONDS = 600; // 10 minutes
 
     @Override
     public AuthResponse login(AuthRequest request, HttpServletResponse response) {
@@ -70,7 +74,7 @@ public class AuthServiceImpl implements AuthenticationService {
         String accessToken = jwtUtil.generateToken(extraClaims, user, 900000L);
         String refreshToken = jwtUtil.generateToken(user, 604800000L);
 
-        setRefreshTokenCookie(response, refreshToken);
+        cookieManager.setRefreshTokenCookie(response, refreshToken);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -104,12 +108,7 @@ public class AuthServiceImpl implements AuthenticationService {
         }
 
         // Remove refresh token cookie
-        Cookie deleteCookie = new Cookie("refreshToken", null);
-        deleteCookie.setHttpOnly(true);
-        deleteCookie.setSecure(false);
-        deleteCookie.setPath("/");
-        deleteCookie.setMaxAge(0);
-        response.addCookie(deleteCookie);
+        cookieManager.clearRefreshTokenCookie(response);
     }
 
     @Override
@@ -153,7 +152,7 @@ public class AuthServiceImpl implements AuthenticationService {
         }
 
         // Set new refresh token in cookie
-        setRefreshTokenCookie(response, newRefreshToken);
+        cookieManager.setRefreshTokenCookie(response, newRefreshToken);
 
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
@@ -164,13 +163,13 @@ public class AuthServiceImpl implements AuthenticationService {
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
         // Validate input
-        if (request == null || request.getEmail() == null || request.getPassword() == null 
+        if (request == null || request.getEmail() == null || request.getPassword() == null
                 || request.getFullName() == null) {
             throw new ApplicationException(ErrorCode.INVALID_REQUEST);
         }
 
         String email = request.getEmail().trim().toLowerCase();
-        
+
         // Check if user already exists
         if (userRepository.findByEmail(email).isPresent()) {
             throw new ApplicationException(ErrorCode.USER_ALREADY_EXISTS);
@@ -181,14 +180,14 @@ public class AuthServiceImpl implements AuthenticationService {
                 .ifPresent(pendingRegistrationRepository::delete);
 
         // Generate 6-digit OTP
-        String otpCode = generateOtp();
-        
+        String otpCode = otpGenerator.generate();
+
         // Hash password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        
+
         // Calculate OTP expiry
-        Instant otpExpiry = Instant.now().plusSeconds(OTP_VALIDITY_MINUTES * 60);
-        
+        Instant otpExpiry = Instant.now().plusSeconds(OTP_VALIDITY_SECONDS);
+
         // Save pending registration
         PendingRegistration pendingRegistration = PendingRegistration.builder()
                 .email(email)
@@ -198,16 +197,16 @@ public class AuthServiceImpl implements AuthenticationService {
                 .otpExpiry(otpExpiry)
                 .attempts(0)
                 .build();
-        
+
         pendingRegistrationRepository.save(pendingRegistration);
-        
+
         // Send OTP via email (async)
         emailService.sendOtpEmail(email, request.getFullName(), otpCode);
-        
+
         return RegisterResponse.builder()
                 .email(email)
                 .message("OTP sent to your email. Please verify to complete registration.")
-                .otpExpirySeconds(OTP_VALIDITY_MINUTES * 60)
+                .otpExpirySeconds(OTP_VALIDITY_SECONDS)
                 .build();
     }
 
@@ -221,17 +220,17 @@ public class AuthServiceImpl implements AuthenticationService {
 
         String email = request.getEmail().trim().toLowerCase();
         String otpCode = request.getOtpCode().trim();
-        
+
         // Find pending registration
         PendingRegistration pendingReg = pendingRegistrationRepository.findByEmail(email)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.REGISTRATION_NOT_FOUND));
-        
+
         // Check if OTP is expired
         if (Instant.now().isAfter(pendingReg.getOtpExpiry())) {
             pendingRegistrationRepository.delete(pendingReg);
             throw new ApplicationException(ErrorCode.OTP_EXPIRED);
         }
-        
+
         // Verify OTP
         if (!otpCode.equals(pendingReg.getOtpCode())) {
             // Increment attempts
@@ -239,7 +238,7 @@ public class AuthServiceImpl implements AuthenticationService {
             pendingRegistrationRepository.save(pendingReg);
             throw new ApplicationException(ErrorCode.INVALID_OTP);
         }
-        
+
         // Create user account
         User newUser = User.builder()
                 .email(email)
@@ -250,26 +249,10 @@ public class AuthServiceImpl implements AuthenticationService {
 
         // Bring the user to our home :) ...
         userRepository.save(newUser);
-        
+
         // ...and delete corresponding pending registration
         pendingRegistrationRepository.delete(pendingReg);
-        
+
         return true;
-    }
-
-    private String generateOtp() {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000); // 6-digit OTP
-        return String.valueOf(otp);
-    }
-
-    private void setRefreshTokenCookie(HttpServletResponse response, String newRefreshToken) {
-        Cookie newRefreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
-        newRefreshTokenCookie.setHttpOnly(true);
-        newRefreshTokenCookie.setSecure(false); // Use true for HTTPS
-        newRefreshTokenCookie.setPath("/"); // Apply to all paths
-        newRefreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
-
-        response.addCookie(newRefreshTokenCookie);
     }
 }

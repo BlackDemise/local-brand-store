@@ -28,6 +28,7 @@ import wandererpi.lbs.repository.jdbc.StockRepository;
 import wandererpi.lbs.repository.jpa.*;
 import wandererpi.lbs.service.EmailService;
 import wandererpi.lbs.service.OrderService;
+import wandererpi.lbs.service.validator.OrderStatusValidator;
 import wandererpi.lbs.util.VietQRUtil;
 
 import java.math.BigDecimal;
@@ -50,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
     private final SkuRepository skuRepository;
     private final StockRepository stockRepository;
     private final EmailService emailService;
+    private final OrderStatusValidator orderStatusValidator;
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -188,8 +190,8 @@ public class OrderServiceImpl implements OrderService {
         OrderStatus oldStatus = order.getStatus();
         OrderStatus newStatus = request.getNewStatus();
 
-        // Validate status transition
-        validateStatusTransition(oldStatus, newStatus);
+        // Validate status transition - delegated to validator
+        orderStatusValidator.validateTransition(oldStatus, newStatus);
 
         // Update order status
         order.setStatus(newStatus);
@@ -273,26 +275,6 @@ public class OrderServiceImpl implements OrderService {
 
     private String generateTrackingToken() {
         return UUID.randomUUID().toString().replace("-", "").toUpperCase();
-    }
-
-    private void validateStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
-        // Define valid transitions
-        Map<OrderStatus, Set<OrderStatus>> validTransitions = new HashMap<>();
-        validTransitions.put(OrderStatus.PENDING_PAYMENT,
-                Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
-        validTransitions.put(OrderStatus.CONFIRMED,
-                Set.of(OrderStatus.SHIPPING, OrderStatus.CANCELLED));
-        validTransitions.put(OrderStatus.SHIPPING,
-                Set.of(OrderStatus.DELIVERED));
-        validTransitions.put(OrderStatus.DELIVERED,
-                Set.of());  // Terminal state
-        validTransitions.put(OrderStatus.CANCELLED,
-                Set.of());  // Terminal state
-
-        Set<OrderStatus> allowedTransitions = validTransitions.get(currentStatus);
-        if (allowedTransitions == null || !allowedTransitions.contains(newStatus)) {
-            throw new ApplicationException(ErrorCode.INVALID_ORDER_STATUS);
-        }
     }
 
     private void restoreStockForOrder(Long orderId) {
