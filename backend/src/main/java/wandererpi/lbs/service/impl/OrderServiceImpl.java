@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +31,9 @@ import wandererpi.lbs.service.validator.OrderStatusValidator;
 import wandererpi.lbs.util.VietQRUtil;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -80,7 +82,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. Create order
         Order order = Order.builder()
-                .trackingToken(generateTrackingToken())
                 .status(determineOrderStatus(request.getPaymentMethod()))
                 .paymentMethod(request.getPaymentMethod())
                 .customerName(request.getCustomerName())
@@ -89,6 +90,8 @@ public class OrderServiceImpl implements OrderService {
                 .shippingAddr(request.getShippingAddress())
                 .note(request.getNote())
                 .build();
+
+        String rawToken = generateTrackingToken(order);
 
         // Calculate total from reservations
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -138,7 +141,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("Order placement completed for order ID: {}", order.getId());
 
         // 9. Send confirmation email (async)
-        emailService.sendOrderConfirmation(order);
+        emailService.sendOrderConfirmation(order, rawToken);
 
         OrderResponse response = mapToOrderResponse(order);
 
@@ -152,7 +155,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse getOrderByTrackingToken(String trackingToken) {
-        Order order = orderRepository.findByTrackingToken(trackingToken)
+        String hashedToken = hashToken(trackingToken);
+
+        Order order = orderRepository.findByTrackingToken(hashedToken)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.ORDER_NOT_FOUND));
         return mapToOrderResponse(order);
     }
@@ -273,8 +278,24 @@ public class OrderServiceImpl implements OrderService {
                 : OrderStatus.PENDING_PAYMENT;
     }
 
-    private String generateTrackingToken() {
-        return UUID.randomUUID().toString().replace("-", "").toUpperCase();
+    private String generateTrackingToken(Order order) {
+        String rawToken = UUID.randomUUID().toString().replace("-", "").toUpperCase();
+
+        // Set the hashed token into Order...
+        order.setTrackingToken(hashToken(rawToken));
+
+        // ...and return the raw token
+        return rawToken;
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private void restoreStockForOrder(Long orderId) {

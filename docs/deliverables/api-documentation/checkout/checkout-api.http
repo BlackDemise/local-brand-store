@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8080/api/v1
-@cartToken = e30ff97e-638e-4ed4-a403-109e39a5c896
+@cartToken = 961b5710-71ab-4e16-9411-48ea8b3bb8d7
 
 # Cart Item IDs (Just look at the database please)
 @cartItemId1 = 1

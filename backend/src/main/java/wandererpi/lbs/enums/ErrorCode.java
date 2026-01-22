@@ -24,7 +24,8 @@ public enum ErrorCode {
     INVALID_ORDER_STATUS(400, "Invalid order status transition", HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXISTS(409, "User already exists", HttpStatus.CONFLICT),
     OTP_EXPIRED(400, "OTP expired", HttpStatus.BAD_REQUEST),
-    INVALID_SIGNATURE(400, "Invalid webhook signature", HttpStatus.BAD_REQUEST);
+    INVALID_SIGNATURE(400, "Invalid webhook signature", HttpStatus.BAD_REQUEST),
+    INTERNAL_SERVER_ERROR(500, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;
     private final String message;

@@ -8,7 +8,7 @@ public interface EmailService {
     /**
      * Send order confirmation email with tracking link
      */
-    void sendOrderConfirmation(Order order);
+    void sendOrderConfirmation(Order order, String rawToken);
     
     /**
      * Send order status update email

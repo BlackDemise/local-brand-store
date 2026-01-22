@@ -36,13 +36,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendOrderConfirmation(Order order) {
+    public void sendOrderConfirmation(Order order, String rawToken) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
             message.setTo(order.getCustomerEmail());
-            message.setSubject("Order Confirmation - #" + order.getTrackingToken());
-            message.setText(buildOrderConfirmationEmail(order));
+            message.setSubject("Order Confirmation - #" + rawToken);
+            message.setText(buildOrderConfirmationEmail(order, rawToken));
             
             mailSender.send(message);
             log.info("Order confirmation email sent to: {}", order.getCustomerEmail());
@@ -105,7 +105,7 @@ public class EmailServiceImpl implements EmailService {
 
     // ========== Private Helper Methods ==========
     
-    private String buildOrderConfirmationEmail(Order order) {
+    private String buildOrderConfirmationEmail(Order order, String rawToken) {
         StringBuilder sb = new StringBuilder();
         
         sb.append("ORDER CONFIRMATION\n");
@@ -115,7 +115,7 @@ public class EmailServiceImpl implements EmailService {
         
         sb.append("Order Details:\n");
         sb.append("--------------\n");
-        sb.append("Order Number: ").append(order.getTrackingToken()).append("\n");
+        sb.append("Order Number: ").append(rawToken).append("\n");
         sb.append("Order Date: ").append(formatInstant(order.getCreatedAt())).append("\n");
         sb.append("Status: ").append(formatStatus(order.getStatus())).append("\n");
         sb.append("Payment Method: ").append(formatPaymentMethod(order.getPaymentMethod())).append("\n\n");
